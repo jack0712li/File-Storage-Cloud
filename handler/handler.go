@@ -5,6 +5,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"filestore-server/meta"
+	"time"
+	"filestore-server/util"
 )
 
 // UploadHandler : handles the upload of files
@@ -19,22 +22,43 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == "POST" {
 		file, head, err := r.FormFile("file")
 		if err != nil {
-			fmt.Printf("Failed to get data, err: %s", err.Error())
+			fmt.Printf("Failed to get data, err: %s\n", err.Error())
+			io.WriteString(w, "Failed to get data")
 			return
 		}
 		defer file.Close()
-		newFile, err := os.Create("/tmp/" + head.Filename)
-		if err != nil {
-			fmt.Printf("Failed to create file, err: %s", err.Error())
-			return
+
+		fileMeta := meta.FileMeta{
+			FileName: head.Filename,
+			Location: os.TempDir() + "\\" + head.Filename,
+			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
+
 		}
-		defer newFile.Close()
-		_, err = io.Copy(newFile, file)
+	
+		tempFilePath := fileMeta.Location
+		newFile, err := os.Create(tempFilePath)
 		if err != nil {
-			fmt.Printf("Failed to save data into file, err: %s", err.Error())
+			fmt.Printf("Failed to create file, err: %s\n", err.Error())
+			io.WriteString(w, "Failed to create file")
 			return
 		}
 
+
+		defer newFile.Close()
+	
+		fileMeta.FileSize, err = io.Copy(newFile, file)
+		if err != nil {
+			fmt.Printf("Failed to save data into file, err: %s\n", err.Error())
+			io.WriteString(w, "Failed to save data into file")
+			return
+		}
+		
+		newFile.Seek(0, 0)
+		fileMeta.FileSha1 = util.FileSha1(newFile)
+		meta.UpdateFileMeta(fileMeta)
+
+		fmt.Printf(fileMeta.FileSha1 , fileMeta.FileName, fileMeta.FileSize, fileMeta.Location, fileMeta.UploadAt)
+	
 		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
 	}
 
@@ -44,3 +68,6 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 func UploadSucHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Upload Success")
 }
+
+
+func 
