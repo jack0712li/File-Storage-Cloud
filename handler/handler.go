@@ -8,6 +8,7 @@ import (
 	"filestore-server/meta"
 	"time"
 	"filestore-server/util"
+	"encoding/json"
 )
 
 // UploadHandler : handles the upload of files
@@ -56,8 +57,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		newFile.Seek(0, 0)
 		fileMeta.FileSha1 = util.FileSha1(newFile)
 		meta.UpdateFileMeta(fileMeta)
-
-		fmt.Printf(fileMeta.FileSha1 , fileMeta.FileName, fileMeta.FileSize, fileMeta.Location, fileMeta.UploadAt)
+		fmt.Print(fileMeta.FileSha1)
 	
 		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
 	}
@@ -69,5 +69,15 @@ func UploadSucHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "Upload Success")
 }
 
-
-func 
+// GetFileMetaHandler : get file metadata
+func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	filehash:= r.Form["filehash"][0]
+	fMeta := meta.GetFileMeta(filehash)
+	data,err:= json.Marshal(fMeta)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
+}
