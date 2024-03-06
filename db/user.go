@@ -5,6 +5,15 @@ import (
 	"fmt"
 )
 
+type User struct {
+	Username     string
+	Email        string
+	Phone        string
+	SignupAt     string
+	LastActiveAt string
+	Status       int
+}
+
 // UserSignup: register a new user
 func UserSignup(username string, passwd string) bool {
 	stmt, err := mydb.DBConn().Prepare("insert ignore into tbl_user (`user_name`, `user_pwd`) values (?, ?)")
@@ -68,4 +77,25 @@ func UpdateToken(username string, token string) bool {
 		return false
 	}
 	return true
+}
+
+// GetUserInfo : 查询用户信息
+func GetUserInfo(username string) (User, error) {
+	user := User{}
+
+	stmt, err := mydb.DBConn().Prepare(
+		"select user_name,signup_at from tbl_user where user_name=? limit 1")
+	if err != nil {
+		fmt.Println(err.Error())
+		return user, err
+	}
+	defer stmt.Close()
+
+	// 执行查询的操作
+	err = stmt.QueryRow(username).Scan(&user.Username, &user.SignupAt)
+	if err != nil {
+		
+		return user, err
+	}
+	return user, nil
 }
