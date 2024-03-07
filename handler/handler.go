@@ -2,13 +2,14 @@ package handler
 
 import (
 	"encoding/json"
+	dblayer "filestore-server/db"
 	"filestore-server/meta"
 	"filestore-server/util"
-	dblayer "filestore-server/db"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -92,6 +93,29 @@ func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	data,err:= json.Marshal(fMeta)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(data)
+}
+
+// FileQueryHandler: 查询批量的文件元信息
+func FileQueryHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+
+	limitCnt, _ := strconv.Atoi(r.Form.Get("limit"))
+	username := r.Form.Get("username")
+	//不直接查询文件表，改去查询用户文件表
+	//userFile, e := dblayer.GetFileMetaList(limitCnt)
+
+	userFile, e := dblayer.QueryUserFileMetas(username, limitCnt)
+	if e != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, e := json.Marshal(userFile)
+	if e != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
