@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"filestore-server/meta"
 	"filestore-server/util"
+	dblayer "filestore-server/db"
 	"fmt"
 	"io"
 	"net/http"
@@ -60,7 +61,16 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		_= meta.UpdateFileMetaDB(fileMeta)
 		fmt.Print(fileMeta.FileSha1)
 	
-		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
+		// 更新用户文件记录
+		r.ParseForm()
+		username := r.Form.Get("username")
+		isSuc := dblayer.OnUserFiledUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
+		if isSuc {
+			// 上传完成，跳转到home页面
+			http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
+		} else {
+			w.Write([]byte("upload failed:  更新用户文件表记录失败"))
+		}
 	}
 
 }

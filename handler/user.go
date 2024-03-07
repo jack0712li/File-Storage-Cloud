@@ -38,27 +38,27 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 	suc := dblayer.UserSignup(username, enc_passwd)
 	if suc {
-		w.Write([]byte("SUCCESS"))
+		w.Write([]byte("SUCCESS Signup"))
 	} else {
-		w.Write([]byte("FAILED"))
+		w.Write([]byte("FAILED Signup"))
 	}
 	
 }
 
 // SignInHandler: handle user signin request
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
-	// if r.Method == http.MethodGet {
-	// 	data, err := os.ReadFile("static/view/signin.html")
-	// 	if err != nil {
-	// 		w.WriteHeader(http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	w.Write(data)
+	if r.Method == http.MethodGet {
+		data, err := os.ReadFile("static/view/signin.html")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Write(data)
 
-	// 	//http.Redirect(w, r, "/static/view/signin.html", http.StatusFound)
-	// 	//return
+		//http.Redirect(w, r, "/static/view/signin.html", http.StatusFound)
+		//return
 
-	// }
+	}
 	r.ParseForm()
 	username := r.Form.Get("username")
 	password := r.Form.Get("password")
@@ -67,14 +67,14 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	//1. check the username and password
 	pwdChecked := dblayer.UserSignin(username, encPasswd)
 	if !pwdChecked{
-		w.Write([]byte("FAILED"))
+		w.Write([]byte("FAILED password not match"))
 		return
 	}
 	//2. generate token
 	token := GenToken(username)
 	upRes := dblayer.UpdateToken(username, token)
 	if !upRes {
-		w.Write([]byte("FAILED"))
+		w.Write([]byte("FAILED to update token"))
 		return
 	}
 	
