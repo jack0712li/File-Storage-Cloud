@@ -48,15 +48,15 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 // SignInHandler: handle user signin request
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		data, err := os.ReadFile("static/view/signin.html")
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.Write(data)
+		// data, err := os.ReadFile("static/view/signin.html")
+		// if err != nil {
+		// 	w.WriteHeader(http.StatusInternalServerError)
+		// 	return
+		// }
+		// w.Write(data)
 
-		//http.Redirect(w, r, "/static/view/signin.html", http.StatusFound)
-		//return
+		http.Redirect(w, r, "/static/view/signin.html", http.StatusFound)
+		return
 
 	}
 	r.ParseForm()
@@ -75,6 +75,7 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	upRes := dblayer.UpdateToken(username, token)
 	if !upRes {
 		w.Write([]byte("FAILED to update token"))
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	
